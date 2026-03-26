@@ -1,0 +1,8 @@
+node_modules/
+.idea/
+dist/
+.env
+.env.db
+mongo_db/
+*.log
+.DS_Store
