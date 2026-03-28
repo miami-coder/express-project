@@ -4,6 +4,7 @@ import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { User } from "../models/user.model.js";
+import { tokenRepository } from "../repositories/token.repository.js";
 import { tokenService } from "../services/token.service.js";
 
 class AuthMiddleware {
@@ -39,6 +40,37 @@ class AuthMiddleware {
 
             res.locals.tokenPayload = payload;
             res.locals.user = user;
+            next();
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    public async checkRefreshToken(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const refreshToken = req.get("Authorization")?.split("Bearer ")[1];
+            if (!refreshToken) {
+                throw new ApiError(
+                    "No token provided",
+                    StatusCodesEnum.UNAUTHORIZED,
+                );
+            }
+
+            const payload = tokenService.checkToken(refreshToken, "refresh");
+
+            const tokenFromDb = await tokenRepository.findOne({ refreshToken });
+            if (!tokenFromDb) {
+                throw new ApiError(
+                    "Token not found",
+                    StatusCodesEnum.UNAUTHORIZED,
+                );
+            }
+
+            res.locals.tokenPayload = payload;
             next();
         } catch (e) {
             next(e);

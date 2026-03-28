@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
+import { Document } from "mongoose";
 
+import { EAccountType } from "../enums/account-type.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
+import { ICar } from "../interfaces/car.interface.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
 import { carRepository } from "../repositories/car.repository.js";
 import { carService } from "../services/car.service.js";
@@ -34,15 +37,30 @@ class CarController {
     ) {
         try {
             const { id } = req.params;
-            const data = await carRepository.getById(id);
+            const user = res.locals.user;
 
-            if (!data) {
+            const car = (await carRepository.getById(id)) as ICar & Document;
+
+            if (!car) {
                 return res
                     .status(StatusCodesEnum.NOT_FOUND)
                     .json({ message: "Car not found" });
             }
 
-            res.status(StatusCodesEnum.OK).json(data);
+            const carResponse = car.toObject() as any;
+
+            if (user.accountType === EAccountType.PREMIUM) {
+                const stats = await carRepository.getCarStats(
+                    car.brand,
+                    car.model,
+                    car.region,
+                );
+                carResponse.stats = stats;
+            } else {
+                carResponse.viewCount = null;
+            }
+
+            res.status(StatusCodesEnum.OK).json(carResponse);
         } catch (e) {
             next(e);
         }
@@ -55,10 +73,19 @@ class CarController {
     ) {
         try {
             const { id } = req.params;
-            const updateData = req.body;
 
-            const data = await carRepository.updateById(id, updateData);
+            const data = await carService.update(id, req.body);
             res.status(StatusCodesEnum.OK).json(data);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    public async deleteById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            await carService.delete(id as string);
+            res.sendStatus(StatusCodesEnum.NO_CONTENT);
         } catch (e) {
             next(e);
         }

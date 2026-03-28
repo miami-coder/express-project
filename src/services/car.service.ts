@@ -25,8 +25,8 @@ class CarService {
         }
 
         const rates = await exchangeService.getRates();
-        const userPrice = carData.price as number;
-        const userCurrency = carData.currency as string;
+        const userPrice = Number(carData.price);
+        const userCurrency = String(carData.currency).toUpperCase();
 
         const prices = {
             uah: Math.round(
@@ -57,10 +57,62 @@ class CarService {
 
         if (user.role === EUserRole.BUYER) {
             await User.findByIdAndUpdate(sellerId, { role: EUserRole.SELLER });
-            console.log(`User ${user.email} is now a SELLER`);
         }
 
         return newCar;
+    }
+
+    public async update(
+        id: string,
+        updateData: Partial<ICar>,
+    ): Promise<ICar | null> {
+        const carDocument = await carRepository.getById(id);
+
+        if (!carDocument) {
+            throw new ApiError("Car not found", StatusCodesEnum.NOT_FOUND);
+        }
+
+        const currentCar = JSON.parse(JSON.stringify(carDocument));
+
+        if (updateData.price || updateData.currency) {
+            const rates = await exchangeService.getRates();
+
+            const price = updateData.price ?? currentCar.price;
+            const currency = (
+                updateData.currency ?? currentCar.currency
+            ).toUpperCase();
+
+            if (price === undefined || !currency) {
+                throw new ApiError(
+                    "Price or currency missing",
+                    StatusCodesEnum.BAD_REQUEST,
+                );
+            }
+
+            updateData.prices = {
+                uah: Math.round(
+                    exchangeService.convert(price, currency, "UAH", rates),
+                ),
+                usd: Math.round(
+                    exchangeService.convert(price, currency, "USD", rates),
+                ),
+                eur: Math.round(
+                    exchangeService.convert(price, currency, "EUR", rates),
+                ),
+            };
+
+            updateData.exchangeRate = rates[currency] || 1;
+        }
+
+        return await carRepository.updateById(id, updateData);
+    }
+
+    public async delete(id: string): Promise<void> {
+        const car = await carRepository.getById(id);
+        if (!car) {
+            throw new ApiError("Car not found", StatusCodesEnum.NOT_FOUND);
+        }
+        await carRepository.deleteById(id);
     }
 }
 

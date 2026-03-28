@@ -23,7 +23,10 @@ class CommonMiddleware {
     public validateBody(validator: ObjectSchema) {
         return async (req: Request, res: Response, next: NextFunction) => {
             try {
-                req.body = await validator.validateAsync(req.body);
+                req.body = await validator.validateAsync(req.body, {
+                    stripUnknown: false,
+                    abortEarly: false,
+                });
                 next();
             } catch (e) {
                 next(new ApiError(e.details[0].message, 400));

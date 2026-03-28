@@ -16,18 +16,13 @@ class ExchangeService {
             const { data } = await axios.get<IPrivatResponse[]>(
                 this.PRIVAT_API,
             );
-
             const rates: Record<string, number> = { UAH: 1 };
             data.forEach((item) => {
-                rates[item.ccy] = parseFloat(item.sale);
+                rates[item.ccy.toUpperCase()] = parseFloat(item.sale);
             });
-
             return rates;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            console.error(
-                "PrivatBank's mistake, we are returning default rates",
-                e,
-            );
             return { USD: 40, EUR: 43, UAH: 1 };
         }
     }
@@ -38,8 +33,13 @@ class ExchangeService {
         to: string,
         rates: Record<string, number>,
     ): number {
-        const amountInUah = from === "UAH" ? amount : amount * rates[from];
-        return to === "UAH" ? amountInUah : amountInUah / rates[to];
+        const fromUpper = from.toUpperCase();
+        const toUpper = to.toUpperCase();
+        const fromRate = rates[fromUpper] || 1;
+        const toRate = rates[toUpper] || 1;
+
+        const amountInUah = fromUpper === "UAH" ? amount : amount * fromRate;
+        return toUpper === "UAH" ? amountInUah : amountInUah / toRate;
     }
 }
 

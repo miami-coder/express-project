@@ -22,7 +22,12 @@ export class CarValidator {
     });
 
     public static update = joi.object({
+        brand: this.brand,
+        model: this.model,
+        year: this.year,
         price: this.price,
+        currency: this.currency,
         description: this.description,
+        region: this.region,
     });
 }

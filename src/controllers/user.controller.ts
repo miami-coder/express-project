@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
 import { StatusCodesEnum } from "../enums/sc.enum.js";
+import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
 import { IUserQuery, IUserUpdateDTO } from "../interfaces/user.interface.js";
@@ -87,14 +88,21 @@ class UserController {
             next(e);
         }
     }
-    public async uploadAvatar(req: Request, res: Response, next: NextFunction) {
+    public async createManager(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
         try {
-            const { userId } = req.res.locals.tokenPayload as ITokenPayload;
-
-            const data = await userService.updateById(userId, {
-                avatar: req.file.path,
+            const { email, password } = req.body;
+            const manager = await userService.create({
+                email,
+                password,
+                name: "Manager",
+                surname: "Default",
+                role: EUserRole.MANAGER,
             });
-            res.status(StatusCodesEnum.OK).json(data);
+            res.status(StatusCodesEnum.CREATED).json(manager);
         } catch (e) {
             next(e);
         }

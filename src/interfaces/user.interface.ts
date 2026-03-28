@@ -4,7 +4,7 @@ import { IBase } from "./base.interface.js";
 
 interface IUser extends IBase {
     _id: string;
-    name: string;
+    name?: string;
     email: string;
     password?: string;
     role: EUserRole;
@@ -18,7 +18,7 @@ interface IUser extends IBase {
 
 type IUserCreateDTO = Pick<IUser, "name" | "email" | "password"> & {
     surname: string;
-    age: number;
+    age?: number;
     role?: EUserRole;
     accountType?: EAccountType;
     isActive?: boolean;

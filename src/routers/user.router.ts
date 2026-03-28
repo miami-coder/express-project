@@ -8,6 +8,13 @@ const router = Router();
 
 router.get("/", authMiddleware.checkAccessToken, userController.getAll);
 
+router.post(
+    "/manager",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkRole([EUserRole.ADMIN]),
+    userController.createManager,
+);
+
 router.patch(
     "/:id/block",
     authMiddleware.checkAccessToken,

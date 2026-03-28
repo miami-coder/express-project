@@ -37,12 +37,42 @@ class CarRepository {
         );
     }
 
-    public async getAveragePrice(filter: FilterQuery<ICar>): Promise<number> {
-        const result = await Car.aggregate([
-            { $match: filter },
-            { $group: { _id: null, avgPrice: { $avg: "$price" } } },
+    public async deleteById(id: string): Promise<void> {
+        await Car.findByIdAndDelete(id);
+    }
+
+    public async getCarStats(brand: string, model: string, region: string) {
+        const stats = await Car.aggregate([
+            {
+                $match: {
+                    brand,
+                    model,
+                    status: "active",
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgPriceUkraine: { $avg: "$price" },
+                    avgPriceRegion: {
+                        $avg: {
+                            $cond: [
+                                { $eq: ["$region", region] },
+                                "$price",
+                                null,
+                            ],
+                        },
+                    },
+                },
+            },
         ]);
-        return result.length > 0 ? result[0].avgPrice : 0;
+
+        return stats.length > 0
+            ? {
+                  avgPriceUkraine: Math.round(stats[0].avgPriceUkraine),
+                  avgPriceRegion: Math.round(stats[0].avgPriceRegion || 0),
+              }
+            : { avgPriceUkraine: 0, avgPriceRegion: 0 };
     }
 
     public async countByUserId(userId: string): Promise<number> {
