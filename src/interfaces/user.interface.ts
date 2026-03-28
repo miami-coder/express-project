@@ -12,17 +12,25 @@ interface IUser extends IBase {
     permissions: string[];
     isVerified: boolean;
     isActive: boolean;
+    isDeleted: boolean;
     avatar?: string;
 }
 
-type IUserCreateDTO = Pick<IUser, "name" | "email" | "password">;
+type IUserCreateDTO = Pick<IUser, "name" | "email" | "password"> & {
+    surname: string;
+    age: number;
+    role?: EUserRole;
+    accountType?: EAccountType;
+    isActive?: boolean;
+};
 
 type IUserUpdateDTO = Pick<IUser, "name" | "avatar">;
 
 type IUserQuery = {
-    page?: string;
-    limit?: string;
+    pageSize: number;
+    page: number;
     search?: string;
+    order?: string;
 };
 
 export { IUser, IUserCreateDTO, IUserQuery, IUserUpdateDTO };

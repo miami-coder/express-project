@@ -22,6 +22,7 @@ const userSchema = new Schema(
         permissions: { type: [String], default: [] },
         isVerified: { type: Boolean, default: false },
         isActive: { type: Boolean, default: true },
+        isDeleted: { type: Boolean, default: false },
         avatar: { type: String },
     },
     {

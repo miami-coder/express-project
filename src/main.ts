@@ -2,14 +2,28 @@ import express from "express";
 import mongoose from "mongoose";
 
 import { config } from "./configs/config.js";
-import { authRouter } from "./routers/auth.router.js";
+import { cronRunner } from "./crons/index.js";
+import { errorHandler } from "./middlewares/error-handler.middleware.js";
+import { apiRouter } from "./routers/api.router.js";
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/auth", authRouter);
+app.use("/", apiRouter);
+
+app.use(errorHandler);
+
+process.on("uncaughtException", (err) => {
+    console.log("uncaughtException", err);
+    process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+    console.error("unhandledRejection", reason);
+    process.exit(1);
+});
 
 const dbConnection = async () => {
     let dbCon = false;
@@ -30,6 +44,7 @@ const dbConnection = async () => {
 const start = async () => {
     try {
         await dbConnection();
+        cronRunner();
         app.listen(config.PORT, async () => {
             console.log(`Server listening on http://localhost:${config.PORT}`);
         });
