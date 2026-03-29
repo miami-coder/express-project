@@ -1,5 +1,5 @@
 // @ts-ignore
-import { FilterQuery } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 
 import { ICar } from "../interfaces/car.interface.js";
 import { Car } from "../models/car.model.js";
@@ -14,7 +14,10 @@ class CarRepository {
     }
 
     public async getById(id: string): Promise<ICar | null> {
-        return await Car.findById(id).populate("_sellerId", "name email");
+        return await Car.findById(new Types.ObjectId(id)).populate(
+            "_sellerId",
+            "name email",
+        );
     }
 
     public async updateById(
@@ -51,32 +54,42 @@ class CarRepository {
                 },
             },
             {
-                $group: {
-                    _id: null,
-                    avgPriceUkraine: { $avg: "$price" },
-                    avgPriceRegion: {
-                        $avg: {
-                            $cond: [
-                                { $eq: ["$region", region] },
-                                "$price",
-                                null,
-                            ],
+                $facet: {
+                    allUkraine: [
+                        {
+                            $group: {
+                                _id: null,
+                                avg: { $avg: "$prices.usd" },
+                            },
                         },
-                    },
+                    ],
+                    specificRegion: [
+                        { $match: { region } },
+                        {
+                            $group: {
+                                _id: null,
+                                avg: { $avg: "$prices.usd" },
+                            },
+                        },
+                    ],
                 },
             },
         ]);
 
-        return stats.length > 0
-            ? {
-                  avgPriceUkraine: Math.round(stats[0].avgPriceUkraine),
-                  avgPriceRegion: Math.round(stats[0].avgPriceRegion || 0),
-              }
-            : { avgPriceUkraine: 0, avgPriceRegion: 0 };
+        const avgUkraine = stats[0].allUkraine[0]?.avg || 0;
+        const avgRegion = stats[0].specificRegion[0]?.avg || 0;
+
+        return {
+            avgPriceUkraine: Math.round(avgUkraine),
+            avgPriceRegion: Math.round(avgRegion),
+        };
     }
 
     public async countByUserId(userId: string): Promise<number> {
-        return await Car.countDocuments({ _sellerId: userId });
+        const filter: FilterQuery<ICar> = {
+            _sellerId: new Types.ObjectId(userId),
+        };
+        return await Car.countDocuments(filter);
     }
 }
 

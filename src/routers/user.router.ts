@@ -6,13 +6,38 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", authMiddleware.checkAccessToken, userController.getAll);
+router.get(
+    "/",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    userController.getAll,
+);
 
 router.post(
     "/manager",
     authMiddleware.checkAccessToken,
     authMiddleware.checkRole([EUserRole.ADMIN]),
     userController.createManager,
+);
+
+router.patch(
+    "/me/upgrade",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkActiveStatus,
+    userController.upgradeMyAccount,
+);
+
+router.get(
+    "/:id",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    userController.getById,
+);
+
+router.patch(
+    "/:id",
+    authMiddleware.checkAccessToken,
+    userController.updateById,
 );
 
 router.patch(
@@ -27,6 +52,13 @@ router.patch(
     authMiddleware.checkAccessToken,
     authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
     userController.unBlockUser,
+);
+
+router.delete(
+    "/:id",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkRole([EUserRole.ADMIN]),
+    userController.deleteById,
 );
 
 export const userRouter = router;

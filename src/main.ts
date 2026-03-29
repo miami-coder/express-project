@@ -1,3 +1,5 @@
+import dns from "node:dns";
+
 import express from "express";
 import mongoose from "mongoose";
 
@@ -5,6 +7,8 @@ import { config } from "./configs/config.js";
 import { cronRunner } from "./crons/index.js";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import { apiRouter } from "./routers/api.router.js";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const app = express();
 

@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { ObjectSchema } from "joi";
 import { isObjectIdOrHexString } from "mongoose";
 
-import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { ApiError } from "../errors/api.error.js";
 
 class CommonMiddleware {
@@ -30,34 +29,6 @@ class CommonMiddleware {
                 next();
             } catch (e) {
                 next(new ApiError(e.details[0].message, 400));
-            }
-        };
-    }
-
-    public isFileExists() {
-        return async (req: Request, res: Response, next: NextFunction) => {
-            try {
-                if (!req.file) {
-                    throw new ApiError(
-                        "No file upload",
-                        StatusCodesEnum.BAD_REQUEST,
-                    );
-                }
-                next();
-            } catch (e) {
-                next(e);
-            }
-        };
-    }
-
-    public query(validator: ObjectSchema) {
-        return async (req: Request, res: Response, next: NextFunction) => {
-            try {
-                const query = await validator.validateAsync(req.query);
-                (req as any).validatedQuery = query;
-                next();
-            } catch (e) {
-                next(new ApiError(e.message, StatusCodesEnum.BAD_REQUEST));
             }
         };
     }

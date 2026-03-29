@@ -14,6 +14,7 @@ router.get("/", carController.getAll);
 router.post(
     "/",
     authMiddleware.checkAccessToken,
+    authMiddleware.checkActiveStatus,
     commonMiddleware.validateBody(CarValidator.create),
     carController.create,
 );
@@ -28,13 +29,22 @@ router.get(
 router.patch(
     "/:id",
     authMiddleware.checkAccessToken,
+    authMiddleware.checkActiveStatus,
     commonMiddleware.validateBody(CarValidator.update),
     carController.updateById,
+);
+
+router.patch(
+    "/:id/status",
+    authMiddleware.checkAccessToken,
+    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    carController.updateStatus,
 );
 
 router.delete(
     "/:id",
     authMiddleware.checkAccessToken,
+    authMiddleware.checkActiveStatus,
     authMiddleware.checkRole([EUserRole.MANAGER, EUserRole.ADMIN]),
     carController.deleteById,
 );

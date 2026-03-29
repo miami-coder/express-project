@@ -12,6 +12,8 @@ class UserRepository {
         if (query.search) {
             filterObject.$or = [
                 { name: { $regex: query.search, $options: "i" } },
+                { email: { $regex: query.search, $options: "i" } },
+                { surname: { $regex: query.search, $options: "i" } },
             ];
         }
 
@@ -20,7 +22,7 @@ class UserRepository {
                 .limit(query.pageSize)
                 .skip(skip)
                 .sort(query.order),
-            User.find(filterObject).countDocuments(),
+            User.countDocuments(filterObject),
         ]);
     }
 

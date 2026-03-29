@@ -5,7 +5,6 @@ import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { TokenTypeEnum } from "../enums/token-type.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ITokenPair, ITokenPayload } from "../interfaces/token.interface.js";
-import { tokenRepository } from "../repositories/token.repository.js";
 
 class TokenService {
     public generateTokens(payload: ITokenPayload): ITokenPair {
@@ -58,18 +57,6 @@ class TokenService {
         } catch (e) {
             throw new ApiError("Invalid token", StatusCodesEnum.UNAUTHORIZED);
         }
-    }
-
-    public async isTokenExists(
-        token: string,
-        type: TokenTypeEnum,
-    ): Promise<boolean> {
-        const tokenKey =
-            type === TokenTypeEnum.ACCESS ? "accessToken" : "refreshToken";
-        const tokenInDb = await tokenRepository.findByParams({
-            [tokenKey]: token,
-        });
-        return !!tokenInDb;
     }
 }
 

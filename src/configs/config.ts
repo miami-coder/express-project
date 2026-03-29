@@ -15,6 +15,13 @@ interface IConfig {
     JWT_ACTIVATE_LIFETIME: string;
     JWT_RECOVERY_SECRET: string;
     JWT_RECOVERY_LIFETIME: string;
+
+    SMTP_HOST: string;
+    SMTP_PORT: number;
+    SMTP_USER: string;
+    SMTP_PASS: string;
+    SMTP_FROM: string;
+    MANAGER_EMAIL: string;
 }
 
 const config: IConfig = {
@@ -31,6 +38,13 @@ const config: IConfig = {
     JWT_ACTIVATE_LIFETIME: process.env.JWT_ACTIVATE_LIFETIME || "1h",
     JWT_RECOVERY_SECRET: process.env.JWT_RECOVERY_SECRET,
     JWT_RECOVERY_LIFETIME: process.env.JWT_RECOVERY_LIFETIME || "10m",
+
+    SMTP_HOST: process.env.SMTP_HOST || "smtp.ethereal.email",
+    SMTP_PORT: Number(process.env.SMTP_PORT) || 587,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS,
+    SMTP_FROM: process.env.SMTP_FROM || "AutoRia Clone",
+    MANAGER_EMAIL: process.env.MANAGER_EMAIL || "manager@gmail.com",
 };
 
 export { config };

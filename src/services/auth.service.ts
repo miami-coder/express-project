@@ -57,7 +57,7 @@ class AuthService {
 
         if (!user.isActive) {
             throw new ApiError(
-                "Твій акаунт заблоковано модератором. Звернись у підтримку.",
+                "Your account has been blocked by a moderator. Contact support.",
                 StatusCodesEnum.FORBIDDEN,
             );
         }

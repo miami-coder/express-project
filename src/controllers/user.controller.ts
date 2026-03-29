@@ -1,19 +1,24 @@
 import { NextFunction, Request, Response } from "express";
 
+import { EAccountType } from "../enums/account-type.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
-import { IUserQuery, IUserUpdateDTO } from "../interfaces/user.interface.js";
+import { IUser, IUserUpdateDTO } from "../interfaces/user.interface.js";
 import { userService } from "../services/user.service.js";
 
 class UserController {
     public async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const { validatedQuery } = req as any as {
-                validatedQuery: IUserQuery;
+            const query = (req as any).validatedQuery || {
+                page: Number(req.query.page) || 1,
+                pageSize: Number(req.query.pageSize) || 10,
+                search: (req.query.search as string) || "",
+                order: (req.query.order as string) || "createdAt",
             };
-            const data = await userService.getAll(validatedQuery);
+
+            const data = await userService.getAll(query);
             res.status(StatusCodesEnum.OK).json(data);
         } catch (e) {
             next(e);
@@ -40,9 +45,29 @@ class UserController {
         next: NextFunction,
     ) {
         try {
-            const { id } = req.params;
-            const user = req.body as IUserUpdateDTO;
-            const data = await userService.updateById(id, user);
+            const { id: targetUserId } = req.params;
+            const { userId: myId, role: myRole } = res.locals
+                .tokenPayload as ITokenPayload;
+
+            const body = req.body as IUserUpdateDTO & { role?: string };
+
+            if (myRole !== EUserRole.ADMIN && targetUserId !== myId) {
+                throw new ApiError(
+                    "You can only update your own profile",
+                    StatusCodesEnum.FORBIDDEN,
+                );
+            }
+
+            const { role, ...rest } = body;
+
+            const finalUpdateData =
+                myRole === EUserRole.ADMIN ? { ...rest, role } : rest;
+
+            const data = await userService.updateById(
+                targetUserId,
+                finalUpdateData as Partial<IUser>,
+            );
+
             res.status(StatusCodesEnum.OK).json(data);
         } catch (e) {
             next(e);
@@ -94,15 +119,42 @@ class UserController {
         next: NextFunction,
     ) {
         try {
-            const { email, password } = req.body;
+            const { email, password, name, surname } = req.body;
+
+            if (!email || !password) {
+                throw new ApiError(
+                    "Email and password are required",
+                    StatusCodesEnum.BAD_REQUEST,
+                );
+            }
             const manager = await userService.create({
                 email,
                 password,
-                name: "Manager",
-                surname: "Default",
+                name: name || "Manager",
+                surname: surname || "Staff",
                 role: EUserRole.MANAGER,
+                accountType: EAccountType.PREMIUM,
             });
             res.status(StatusCodesEnum.CREATED).json(manager);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    public async upgradeMyAccount(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const { userId } = res.locals.tokenPayload as ITokenPayload;
+
+            const updatedUser = await userService.upgradeToPremium(userId);
+
+            res.status(StatusCodesEnum.OK).json({
+                message: "Success! You are now a Premium user.",
+                user: updatedUser,
+            });
         } catch (e) {
             next(e);
         }

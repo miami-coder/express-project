@@ -6,12 +6,10 @@ import { exchangeService } from "../services/exchange.service.js";
 const handler = async () => {
     try {
         console.log("--- Starting currency update ---");
-
         const rates = await exchangeService.getRates();
-
         const cars = await Car.find();
 
-        for (const car of cars) {
+        const bulkOperations = cars.map((car) => {
             const updatedPrices = {
                 uah: Math.round(
                     exchangeService.convert(
@@ -39,13 +37,22 @@ const handler = async () => {
                 ),
             };
 
-            await Car.findByIdAndUpdate(car._id, {
-                prices: updatedPrices,
-                exchangeRate: rates[car.currency] || 1,
-            });
-        }
+            return {
+                updateOne: {
+                    filter: { _id: car._id },
+                    update: {
+                        $set: {
+                            prices: updatedPrices,
+                            exchangeRate: rates[car.currency] || 1,
+                        },
+                    },
+                },
+            };
+        });
 
-        console.log(`Updated prices for ${cars.length} cars`);
+        if (bulkOperations.length > 0) {
+            await Car.bulkWrite(bulkOperations);
+        }
     } catch (e) {
         console.error("Currency Cron Error:", e.message);
     }

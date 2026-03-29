@@ -90,6 +90,22 @@ class CarController {
             next(e);
         }
     }
+
+    public async updateStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            const updatedCar = await carRepository.updateStatus(
+                id as string,
+                status,
+            );
+
+            res.status(StatusCodesEnum.OK).json(updatedCar);
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 export const carController = new CarController();

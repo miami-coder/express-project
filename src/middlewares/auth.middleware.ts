@@ -3,9 +3,11 @@ import { NextFunction, Request, Response } from "express";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
+import { ITokenPayload } from "../interfaces/token.interface.js";
 import { User } from "../models/user.model.js";
 import { tokenRepository } from "../repositories/token.repository.js";
 import { tokenService } from "../services/token.service.js";
+import { userService } from "../services/user.service.js";
 
 class AuthMiddleware {
     public async checkAccessToken(
@@ -92,6 +94,28 @@ class AuthMiddleware {
                 next(e);
             }
         };
+    }
+
+    public async checkActiveStatus(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const { userId } = res.locals.tokenPayload as ITokenPayload;
+            const user = await userService.getById(userId);
+
+            if (!user.isActive) {
+                throw new ApiError(
+                    "Your account is blocked. Contact support.",
+                    StatusCodesEnum.FORBIDDEN,
+                );
+            }
+
+            next();
+        } catch (e) {
+            next(e);
+        }
     }
 }
 
