@@ -27,9 +27,9 @@ class UserService {
         return userRepository.create(user);
     }
 
-    public async getById(userId: string): Promise<IUser> {
+    public async getById(userId: string): Promise<IUser | null> {
         const user = await userRepository.getById(userId);
-        if (!user) {
+        if (!user || user.isDeleted) {
             throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
         }
         return user;
@@ -37,19 +37,13 @@ class UserService {
     public async updateById(
         userId: string,
         user: Partial<IUser>,
-    ): Promise<IUser> {
-        const data = await userRepository.getById(userId);
-        if (!data) {
-            throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
-        }
+    ): Promise<IUser | null> {
+        await this.getById(userId);
         return await userRepository.updateById(userId, user);
     }
 
     public async deleteById(userId: string): Promise<void> {
-        const data = await userRepository.getById(userId);
-        if (!data) {
-            throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
-        }
+        await this.getById(userId);
         await userRepository.deleteById(userId);
     }
 
@@ -58,28 +52,66 @@ class UserService {
         if (user) {
             throw new ApiError(
                 "User is already exists",
-                StatusCodesEnum.BAD_REQUEST,
+                StatusCodesEnum.CONFLICT,
             );
         }
     }
 
-    public blockUser(user_id: string): Promise<IUser> {
-        return userRepository.blockUser(user_id);
+    public async blockUser(userId: string): Promise<IUser> {
+        const user = await userRepository.getById(userId);
+        if (!user || user.isDeleted) {
+            throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
+        }
+
+        const updatedUser = await userRepository.blockUser(userId);
+
+        if (!updatedUser) {
+            throw new ApiError(
+                "Failed to block user",
+                StatusCodesEnum.BAD_REQUEST,
+            );
+        }
+
+        return updatedUser;
     }
 
-    public unblockUser(user_id: string): Promise<IUser> {
-        return userRepository.unBlockUser(user_id);
+    public async unblockUser(userId: string): Promise<IUser> {
+        const user = await userRepository.getById(userId);
+        if (!user || user.isDeleted) {
+            throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
+        }
+
+        const updatedUser = await userRepository.unBlockUser(userId);
+
+        if (!updatedUser) {
+            throw new ApiError(
+                "Failed to unblock user",
+                StatusCodesEnum.BAD_REQUEST,
+            );
+        }
+
+        return updatedUser;
     }
 
     public async upgradeToPremium(userId: string): Promise<IUser> {
         const user = await userRepository.getById(userId);
-        if (!user) {
+
+        if (!user || user.isDeleted) {
             throw new ApiError("User not found", StatusCodesEnum.NOT_FOUND);
         }
 
-        return await userRepository.updateById(userId, {
+        const updatedUser = await userRepository.updateById(userId, {
             accountType: EAccountType.PREMIUM,
         });
+
+        if (!updatedUser) {
+            throw new ApiError(
+                "Failed to update user",
+                StatusCodesEnum.BAD_REQUEST,
+            );
+        }
+
+        return updatedUser;
     }
 }
 

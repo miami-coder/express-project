@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "removeComments": true,
-    "noUnusedLocals": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "sourceMap": true
+      "target": "ESNext",
+      "module": "NodeNext",
+      "moduleResolution": "node",
+      "strict": true,
+      "rootDir": "./src",
+      "outDir": "./dist",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "removeComments": true,
+      "noUnusedLocals": true,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

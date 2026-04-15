@@ -14,7 +14,11 @@ router.post(
     authController.register,
 );
 
-router.post("/sign-in", authController.login);
+router.post(
+    "/sign-in",
+    commonMiddleware.validateBody(AuthValidator.login),
+    authController.login,
+);
 
 router.post(
     "/refresh",
@@ -24,5 +28,7 @@ router.post(
 );
 
 router.get("/me", authMiddleware.checkAccessToken, authController.me);
+
+router.post("/logout", authMiddleware.checkAccessToken, authController.logout);
 
 export const authRouter = router;

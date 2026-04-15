@@ -4,7 +4,6 @@ import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
-import { User } from "../models/user.model.js";
 import { tokenRepository } from "../repositories/token.repository.js";
 import { tokenService } from "../services/token.service.js";
 import { userService } from "../services/user.service.js";
@@ -25,7 +24,7 @@ class AuthMiddleware {
             }
 
             const payload = tokenService.checkToken(accessToken, "access");
-            const user = await User.findById(payload.userId);
+            const user = await userService.getById(payload.userId);
             if (!user) {
                 throw new ApiError(
                     "User not found",
@@ -105,9 +104,38 @@ class AuthMiddleware {
             const { userId } = res.locals.tokenPayload as ITokenPayload;
             const user = await userService.getById(userId);
 
+            if (!user) {
+                throw new ApiError(
+                    "User not found",
+                    StatusCodesEnum.UNAUTHORIZED,
+                );
+            }
+
             if (!user.isActive) {
                 throw new ApiError(
                     "Your account is blocked. Contact support.",
+                    StatusCodesEnum.FORBIDDEN,
+                );
+            }
+
+            next();
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    public checkUpdateAccess(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { userId, role } = res.locals.tokenPayload as ITokenPayload;
+            const { id } = req.params;
+
+            if (role === EUserRole.ADMIN || role === EUserRole.MANAGER) {
+                return next();
+            }
+
+            if (userId !== id) {
+                throw new ApiError(
+                    "You can only update your own profile",
                     StatusCodesEnum.FORBIDDEN,
                 );
             }

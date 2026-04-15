@@ -68,6 +68,21 @@ class AuthController {
             next(e);
         }
     }
+
+    public async logout(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
+        try {
+            const userId = res.locals.tokenPayload.userId;
+            await authService.logout(userId);
+
+            res.status(StatusCodesEnum.NO_CONTENT).send();
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 export const authController = new AuthController();

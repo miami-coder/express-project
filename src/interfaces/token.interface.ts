@@ -1,4 +1,3 @@
-import { EUserRole } from "../enums/user-role.enum.js";
 import { IBase } from "./base.interface.js";
 
 interface IToken extends IBase {
@@ -12,7 +11,7 @@ type ITokenPair = Pick<IToken, "accessToken" | "refreshToken">;
 
 interface ITokenPayload {
     userId: string;
-    role: EUserRole;
+    role: string;
 }
 
 type ITokenModel = Pick<IToken, "accessToken" | "refreshToken" | "_userId">;

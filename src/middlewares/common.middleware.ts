@@ -23,11 +23,11 @@ class CommonMiddleware {
         return async (req: Request, res: Response, next: NextFunction) => {
             try {
                 req.body = await validator.validateAsync(req.body, {
-                    stripUnknown: false,
+                    stripUnknown: true,
                     abortEarly: false,
                 });
                 next();
-            } catch (e) {
+            } catch (e: any) {
                 next(new ApiError(e.details[0].message, 400));
             }
         };

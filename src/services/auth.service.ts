@@ -1,10 +1,11 @@
-import { EAccountType } from "../enums/account-type.enum.js";
+import { EAccountType } from "../enums/account-type.enum";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { IAuth } from "../interfaces/auth.interface.js";
-import { ITokenPair } from "../interfaces/token.interface.js";
+import { IRole } from "../interfaces/role.interface";
+import { ITokenPair, ITokenPayload } from "../interfaces/token.interface.js";
 import { IUser, IUserCreateDTO } from "../interfaces/user.interface.js";
+import { Role } from "../models/role.model";
 import { tokenRepository } from "../repositories/token.repository.js";
 import { userRepository } from "../repositories/user.repository.js";
 import { passwordService } from "./password.service.js";
@@ -19,17 +20,23 @@ class AuthService {
 
         const password = await passwordService.hashPassword(user.password);
 
+        const buyerRole = await Role.findOne({ name: "buyer" });
+        if (!buyerRole) {
+            throw new ApiError("Default role not found. Contact admin.", 500);
+        }
+
         const newUser = await userRepository.create({
             ...user,
             password,
-            role: EUserRole.BUYER,
+            role: buyerRole._id,
             accountType: EAccountType.BASE,
             isActive: true,
+            isDeleted: false,
         });
 
         const tokens = tokenService.generateTokens({
             userId: newUser._id.toString(),
-            role: newUser.role,
+            role: buyerRole.name,
         });
 
         await tokenRepository.create({ ...tokens, _userId: newUser._id });
@@ -62,9 +69,12 @@ class AuthService {
             );
         }
 
+        await tokenRepository.deleteByParams({ _userId: user._id });
+
+        const userRole: IRole = user.role;
         const tokens = tokenService.generateTokens({
             userId: user._id.toString(),
-            role: user.role,
+            role: userRole.name,
         });
 
         await tokenRepository.create({ ...tokens, _userId: user._id });
@@ -73,7 +83,7 @@ class AuthService {
     }
 
     public async refresh(
-        payload: any,
+        payload: ITokenPayload,
         refreshToken: string,
     ): Promise<ITokenPair> {
         await tokenRepository.deleteByParams({ refreshToken });
@@ -86,6 +96,10 @@ class AuthService {
         await tokenRepository.create({ ...tokens, _userId: payload.userId });
 
         return tokens;
+    }
+
+    public async logout(userId: string): Promise<void> {
+        await tokenRepository.deleteByParams({ _userId: userId });
     }
 }
 
