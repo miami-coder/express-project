@@ -24,6 +24,7 @@
         "node-cron": "^4.2.1",
         "nodemailer": "8.0.5",
         "nodemailer-express-handlebars": "^7.0.0",
+        "sharp": "^0.34.5",
         "swagger-ui-express": "^5.0.1",
         "uuid": "^13.0.0"
     },
@@ -35,6 +36,7 @@
         "@types/express": "^5.0.0",
         "@types/handlebars": "^4.1.0",
         "@types/jsonwebtoken": "^9.0.10",
+        "@types/mongoose": "^5.11.97",
         "@types/multer": "^2.1.0",
         "@types/node-cron": "^3.0.11",
         "@types/nodemailer": "^7.0.11",

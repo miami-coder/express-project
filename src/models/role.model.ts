@@ -1,8 +1,13 @@
 import { model, Schema } from "mongoose";
 
-const roleSchema = new Schema({
-    name: { type: String, required: true, unique: true },
-    permissions: [{ type: String }],
-});
+import { IRole } from "../interfaces/role.interface.js";
+
+const roleSchema = new Schema<IRole>(
+    {
+        name: { type: String, required: true, unique: true },
+        permissions: [{ type: String }],
+    },
+    { timestamps: true, versionKey: false },
+);
 
 export const Role = model("Role", roleSchema);

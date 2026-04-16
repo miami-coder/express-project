@@ -2,7 +2,6 @@ import joi from "joi";
 
 import { EAccountType } from "../enums/account-type.enum.js";
 import { RegexEnum } from "../enums/regex.enum.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 
 export class UserValidator {
     private static email = joi.string().email().trim();
@@ -10,7 +9,7 @@ export class UserValidator {
     private static name = joi.string().regex(RegexEnum.NAME);
     private static surname = joi.string().regex(RegexEnum.NAME);
     private static age = joi.number().min(2).max(100);
-    private static role = joi.string().valid(...Object.values(EUserRole));
+    private static role = joi.string().min(2).max(20).lowercase().trim();
     private static accountType = joi
         .string()
         .valid(...Object.values(EAccountType));
@@ -21,13 +20,14 @@ export class UserValidator {
         name: this.name.required(),
         surname: this.surname.required(),
         age: this.age.required(),
-        role: this.role.default(EUserRole.BUYER),
+        role: this.role.optional().default("buyer"),
         accountType: this.accountType.default(EAccountType.BASE),
     });
 
     public static update = joi.object({
-        name: this.name.required(),
-        surname: this.surname.required(),
-        age: this.age.required(),
+        name: this.name.optional(),
+        surname: this.surname.optional(),
+        age: this.age.optional(),
+        avatar: joi.string().optional(),
     });
 }

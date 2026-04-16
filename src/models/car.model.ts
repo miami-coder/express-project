@@ -11,6 +11,8 @@ const carSchema = new Schema(
         year: { type: Number, required: true },
         description: { type: String, required: true },
         price: { type: Number, required: true },
+        isDeleted: { type: Boolean, default: false },
+        images: [{ type: String }],
         currency: {
             type: String,
             enum: Object.values(ECurrency),

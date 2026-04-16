@@ -1,8 +1,15 @@
+import path from "node:path";
+
 import nodemailer from "nodemailer";
+import { Options } from "nodemailer/lib/mailer/index.js";
 import hbs from "nodemailer-express-handlebars";
-import path from "path";
 
 import { config } from "../configs/config.js";
+
+interface IEmailOptions extends Options {
+    template?: string;
+    context?: Record<string, any>;
+}
 
 class EmailService {
     private transporter;
@@ -34,22 +41,49 @@ class EmailService {
         );
     }
 
+    public async sendBrandRequestEmail(
+        adminEmail: string,
+        context: { brandName: string; userName: string },
+    ): Promise<void> {
+        try {
+            const mailOptions: IEmailOptions = {
+                from: config.SMTP_FROM,
+                to: adminEmail,
+                subject: "New Brand Request",
+                template: "brand-request",
+                context,
+            };
+
+            const info = await this.transporter.sendMail(mailOptions);
+
+            if (config.SMTP_HOST === "smtp.ethereal.email") {
+                console.log(`Preview: ${nodemailer.getTestMessageUrl(info)}`);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     public async sendBadWordsReport(
         managerEmail: string,
         context: { userName: string; carId: string },
-    ) {
-        const info = await this.transporter.sendMail({
-            from: config.SMTP_FROM,
-            to: managerEmail,
-            subject: "Blocking message (Bad Words content)",
-            template: "bad-words",
-            context,
-        });
+    ): Promise<void> {
+        try {
+            const mailOptions: IEmailOptions = {
+                from: config.SMTP_FROM,
+                to: managerEmail,
+                subject: "Blocking message (Bad Words content)",
+                template: "bad-words",
+                context,
+            };
 
-        if (config.SMTP_HOST === "smtp.ethereal.email") {
-            console.log(
-                `Email Preview URL: ${nodemailer.getTestMessageUrl(info)}`,
-            );
+            const info = await this.transporter.sendMail(mailOptions);
+
+            if (config.SMTP_HOST === "smtp.ethereal.email") {
+                console.log(`Preview: ${nodemailer.getTestMessageUrl(info)}`);
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
 }

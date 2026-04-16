@@ -54,7 +54,7 @@ const handler = async () => {
             await Car.bulkWrite(bulkOperations);
         }
     } catch (e) {
-        console.error("Currency Cron Error:", e.message);
+        console.error("Currency Cron Error:", (e as Error).message);
     }
 };
 

@@ -25,24 +25,24 @@ interface IConfig {
 }
 
 const config: IConfig = {
-    PORT: process.env.PORT,
-    MONGO_URI: process.env.MONGO_URI,
-    FRONTEND_URL: process.env.FRONTEND_URL,
+    PORT: process.env.PORT || "3333",
+    MONGO_URI: process.env.MONGO_URI as string,
+    FRONTEND_URL: process.env.FRONTEND_URL as string,
 
-    JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
-    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+    JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET as string,
+    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
     JWT_ACCESS_LIFETIME: process.env.JWT_ACCESS_LIFETIME || "10m",
     JWT_REFRESH_LIFETIME: process.env.JWT_REFRESH_LIFETIME || "20m",
 
-    JWT_ACTIVATE_SECRET: process.env.JWT_ACTIVATE_SECRET,
+    JWT_ACTIVATE_SECRET: process.env.JWT_ACTIVATE_SECRET as string,
     JWT_ACTIVATE_LIFETIME: process.env.JWT_ACTIVATE_LIFETIME || "1h",
-    JWT_RECOVERY_SECRET: process.env.JWT_RECOVERY_SECRET,
+    JWT_RECOVERY_SECRET: process.env.JWT_RECOVERY_SECRET as string,
     JWT_RECOVERY_LIFETIME: process.env.JWT_RECOVERY_LIFETIME || "10m",
 
     SMTP_HOST: process.env.SMTP_HOST || "smtp.ethereal.email",
     SMTP_PORT: Number(process.env.SMTP_PORT) || 587,
-    SMTP_USER: process.env.SMTP_USER,
-    SMTP_PASS: process.env.SMTP_PASS,
+    SMTP_USER: process.env.SMTP_USER as string,
+    SMTP_PASS: process.env.SMTP_PASS as string,
     SMTP_FROM: process.env.SMTP_FROM || "AutoRia Clone",
     MANAGER_EMAIL: process.env.MANAGER_EMAIL || "manager@gmail.com",
 };

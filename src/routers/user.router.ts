@@ -1,25 +1,26 @@
 import { Router } from "express";
 
 import { userController } from "../controllers/user.controller.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { commonMiddleware } from "../middlewares/common.middleware";
-import { UserValidator } from "../validators/user.validator";
+import { commonMiddleware } from "../middlewares/common.middleware.js";
+import { QueryValidator } from "../validators/query.validator.js";
+import { UserValidator } from "../validators/user.validator.js";
 
 const router = Router();
 
 router.get(
     "/",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    authMiddleware.checkRole(["admin", "manager"]),
+    commonMiddleware.validate(QueryValidator.pagination, "query"),
     userController.getAll,
 );
 
 router.post(
     "/manager",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN]),
-    commonMiddleware.validateBody(UserValidator.create),
+    authMiddleware.checkRole(["admin"]),
+    commonMiddleware.validate(UserValidator.create, "body"),
     userController.createManager,
 );
 
@@ -33,7 +34,7 @@ router.patch(
 router.get(
     "/:id",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    authMiddleware.checkRole(["admin", "manager"]),
     commonMiddleware.isIdValid("id"),
     userController.getById,
 );
@@ -43,14 +44,14 @@ router.patch(
     authMiddleware.checkAccessToken,
     commonMiddleware.isIdValid("id"),
     authMiddleware.checkUpdateAccess,
-    commonMiddleware.validateBody(UserValidator.update),
+    commonMiddleware.validate(UserValidator.update, "body"),
     userController.updateById,
 );
 
 router.patch(
     "/:id/block",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    authMiddleware.checkRole(["admin", "manager"]),
     commonMiddleware.isIdValid("id"),
     userController.blockUser,
 );
@@ -58,7 +59,7 @@ router.patch(
 router.patch(
     "/:id/unblock",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    authMiddleware.checkRole(["admin", "manager"]),
     commonMiddleware.isIdValid("id"),
     userController.unBlockUser,
 );
@@ -66,7 +67,7 @@ router.patch(
 router.delete(
     "/:id",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN]),
+    authMiddleware.checkRole(["admin"]),
     commonMiddleware.isIdValid("id"),
     userController.deleteById,
 );

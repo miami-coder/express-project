@@ -1,11 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { Document } from "mongoose";
 
-import { EAccountType } from "../enums/account-type.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
-import { ICar } from "../interfaces/car.interface.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
-import { carRepository } from "../repositories/car.repository.js";
 import { carService } from "../services/car.service.js";
 
 class CarController {
@@ -13,8 +9,9 @@ class CarController {
         try {
             const { userId } = res.locals.tokenPayload as ITokenPayload;
             const user = res.locals.user;
+            const files = req.files as Express.Multer.File[];
 
-            const data = await carService.create(userId, req.body, user);
+            const data = await carService.create(userId, req.body, user, files);
             res.status(StatusCodesEnum.CREATED).json(data);
         } catch (e) {
             next(e);
@@ -23,7 +20,7 @@ class CarController {
 
     public async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const data = await carRepository.getAll({});
+            const data = await carService.getAll(req.query);
             res.status(StatusCodesEnum.OK).json(data);
         } catch (e) {
             next(e);
@@ -39,26 +36,7 @@ class CarController {
             const { id } = req.params;
             const user = res.locals.user;
 
-            const car = (await carRepository.getById(id)) as ICar & Document;
-
-            if (!car) {
-                return res
-                    .status(StatusCodesEnum.NOT_FOUND)
-                    .json({ message: "Car not found" });
-            }
-
-            const carResponse = car.toObject() as any;
-
-            if (user.accountType === EAccountType.PREMIUM) {
-                const stats = await carRepository.getCarStats(
-                    car.brand,
-                    car.model,
-                    car.region,
-                );
-                carResponse.stats = stats;
-            } else {
-                carResponse.viewCount = null;
-            }
+            const carResponse = await carService.getById(id, user);
 
             res.status(StatusCodesEnum.OK).json(carResponse);
         } catch (e) {
@@ -91,15 +69,16 @@ class CarController {
         }
     }
 
-    public async updateStatus(req: Request, res: Response, next: NextFunction) {
+    public async updateStatus(
+        req: Request<{ id: string }>,
+        res: Response,
+        next: NextFunction,
+    ) {
         try {
             const { id } = req.params;
             const { status } = req.body;
 
-            const updatedCar = await carRepository.updateStatus(
-                id as string,
-                status,
-            );
+            const updatedCar = await carService.updateStatus(id, status);
 
             res.status(StatusCodesEnum.OK).json(updatedCar);
         } catch (e) {

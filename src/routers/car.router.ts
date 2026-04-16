@@ -1,27 +1,34 @@
 import { Router } from "express";
 
 import { carController } from "../controllers/car.controller.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { carMiddleware } from "../middlewares/car.middleware.js";
 import { commonMiddleware } from "../middlewares/common.middleware.js";
+import { fileMiddleware } from "../middlewares/file.middleware.js";
 import { CarValidator } from "../validators/car.validator.js";
+import { QueryValidator } from "../validators/query.validator.js";
 
 const router = Router();
 
-router.get("/", carController.getAll);
+router.get(
+    "/",
+    commonMiddleware.validate(QueryValidator.pagination, "query"),
+    carController.getAll,
+);
 
 router.post(
     "/",
     authMiddleware.checkAccessToken,
     authMiddleware.checkActiveStatus,
-    commonMiddleware.validateBody(CarValidator.create),
+    fileMiddleware.upload.array("images", 10),
+    fileMiddleware.isFilesExist,
+    commonMiddleware.validate(CarValidator.create, "body"),
     carController.create,
 );
 
 router.get(
     "/:id",
-    authMiddleware.checkAccessToken,
+    commonMiddleware.isIdValid("id"),
     carMiddleware.addView,
     carController.getById,
 );
@@ -30,14 +37,16 @@ router.patch(
     "/:id",
     authMiddleware.checkAccessToken,
     authMiddleware.checkActiveStatus,
-    commonMiddleware.validateBody(CarValidator.update),
+    commonMiddleware.isIdValid("id"),
+    carMiddleware.isOwnerOrStaff,
+    commonMiddleware.validate(CarValidator.update, "body"),
     carController.updateById,
 );
 
 router.patch(
     "/:id/status",
     authMiddleware.checkAccessToken,
-    authMiddleware.checkRole([EUserRole.ADMIN, EUserRole.MANAGER]),
+    authMiddleware.checkRole(["admin", "manager"]),
     carController.updateStatus,
 );
 
@@ -45,7 +54,8 @@ router.delete(
     "/:id",
     authMiddleware.checkAccessToken,
     authMiddleware.checkActiveStatus,
-    authMiddleware.checkRole([EUserRole.MANAGER, EUserRole.ADMIN]),
+    commonMiddleware.isIdValid("id"),
+    carMiddleware.isOwnerOrStaff,
     carController.deleteById,
 );
 

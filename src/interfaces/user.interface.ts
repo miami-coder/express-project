@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 
 import { EAccountType } from "../enums/account-type.enum.js";
 import { IBase } from "./base.interface.js";
-import { IRole } from "./role.interface";
+import { IRole } from "./role.interface.js";
 
 interface IUser extends IBase {
     _id: string;
@@ -17,20 +17,24 @@ interface IUser extends IBase {
     isActive: boolean;
     isDeleted: boolean;
     avatar?: string;
-    age?: number;
+    age: number;
 }
 
-type IUserCreateDTO = Pick<
-    IUser,
-    "name" | "surname" | "email" | "password" | "isDeleted"
-> & {
-    age: number;
-    role: mongoose.Types.ObjectId;
-    accountType: EAccountType;
+interface IUserCreateDTO {
+    name: string;
+    surname: string;
+    email: string;
+    password: string;
+    age?: number;
+    role: string | Types.ObjectId;
+    accountType?: EAccountType;
+    isDeleted?: boolean;
     isActive?: boolean;
-};
+}
 
-type IUserUpdateDTO = Pick<IUser, "name" | "avatar">;
+type IUserUpdateDTO = Partial<
+    Pick<IUser, "name" | "surname" | "age" | "avatar">
+>;
 
 type IUserQuery = {
     pageSize: number;

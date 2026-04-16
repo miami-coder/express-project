@@ -32,4 +32,24 @@ interface ICar extends IBase {
     _sellerId: string;
 }
 
-export { ICar };
+interface ICarQuery {
+    page?: string;
+    limit?: string;
+    brand?: string;
+    region?: string;
+    status?: ECarStatus;
+    search?: string;
+    price_min?: string;
+    price_max?: string;
+}
+
+interface ICarResponse extends Omit<ICar, "viewCount"> {
+    viewCount?: ICar["viewCount"] | null;
+
+    stats?: {
+        avgPriceUkraine: number;
+        avgPriceRegion: number;
+    };
+}
+
+export { ICar, ICarQuery, ICarResponse };

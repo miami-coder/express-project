@@ -1,5 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IRole {
-    _id: string;
+    _id: Types.ObjectId;
     name: string;
     permissions: string[];
 }

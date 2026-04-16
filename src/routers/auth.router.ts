@@ -10,19 +10,19 @@ const router = Router();
 
 router.post(
     "/sign-up",
-    commonMiddleware.validateBody(UserValidator.create),
+    commonMiddleware.validate(UserValidator.create, "body"),
     authController.register,
 );
 
 router.post(
     "/sign-in",
-    commonMiddleware.validateBody(AuthValidator.login),
+    commonMiddleware.validate(AuthValidator.login, "body"),
     authController.login,
 );
 
 router.post(
     "/refresh",
-    commonMiddleware.validateBody(AuthValidator.refreshToken),
+    commonMiddleware.validate(AuthValidator.refreshToken, "body"),
     authMiddleware.checkRefreshToken,
     authController.refresh,
 );

@@ -2,7 +2,7 @@
   "compilerOptions": {
       "target": "ESNext",
       "module": "NodeNext",
-      "moduleResolution": "node",
+      "moduleResolution": "NodeNext",
       "strict": true,
       "rootDir": "./src",
       "outDir": "./dist",

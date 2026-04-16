@@ -19,16 +19,23 @@ class CommonMiddleware {
             }
         };
     }
-    public validateBody(validator: ObjectSchema) {
+
+    public validate(
+        validator: ObjectSchema,
+        field: "body" | "query" | "params" = "body",
+    ) {
         return async (req: Request, res: Response, next: NextFunction) => {
             try {
-                req.body = await validator.validateAsync(req.body, {
+                const value = await validator.validateAsync(req[field], {
                     stripUnknown: true,
                     abortEarly: false,
                 });
+
+                req[field] = value;
                 next();
             } catch (e: any) {
-                next(new ApiError(e.details[0].message, 400));
+                const message = e.details.map((d: any) => d.message).join(", ");
+                next(new ApiError(message, 400));
             }
         };
     }

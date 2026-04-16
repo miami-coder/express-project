@@ -1,11 +1,10 @@
-import { EAccountType } from "../enums/account-type.enum";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { IAuth } from "../interfaces/auth.interface.js";
-import { IRole } from "../interfaces/role.interface";
+import { IRole } from "../interfaces/role.interface.js";
 import { ITokenPair, ITokenPayload } from "../interfaces/token.interface.js";
 import { IUser, IUserCreateDTO } from "../interfaces/user.interface.js";
-import { Role } from "../models/role.model";
+import { roleRepository } from "../repositories/role.repository.js";
 import { tokenRepository } from "../repositories/token.repository.js";
 import { userRepository } from "../repositories/user.repository.js";
 import { passwordService } from "./password.service.js";
@@ -14,29 +13,23 @@ import { userService } from "./user.service.js";
 
 class AuthService {
     public async signUp(
-        user: IUserCreateDTO,
+        dto: IUserCreateDTO,
     ): Promise<{ user: IUser; tokens: ITokenPair }> {
-        await userService.isEmailUnique(user.email);
+        await userService.isEmailUnique(dto.email);
 
-        const password = await passwordService.hashPassword(user.password);
+        const hashedPassword = await passwordService.hashPassword(dto.password);
+        const buyerRole = await roleRepository.getByName("buyer");
+        if (!buyerRole) throw new ApiError("Role not found", 500);
 
-        const buyerRole = await Role.findOne({ name: "buyer" });
-        if (!buyerRole) {
-            throw new ApiError("Default role not found. Contact admin.", 500);
-        }
-
-        const newUser = await userRepository.create({
-            ...user,
-            password,
+        const newUser = await userService.create({
+            ...dto,
+            password: hashedPassword,
             role: buyerRole._id,
-            accountType: EAccountType.BASE,
-            isActive: true,
-            isDeleted: false,
         });
 
         const tokens = tokenService.generateTokens({
             userId: newUser._id.toString(),
-            role: buyerRole.name,
+            role: "buyer",
         });
 
         await tokenRepository.create({ ...tokens, _userId: newUser._id });

@@ -10,22 +10,25 @@ import { User } from "../models/user.model.js";
 
 class UserRepository {
     public async getAll(query: IUserQuery): Promise<[IUser[], number]> {
-        const skip = query.pageSize * (query.page - 1);
+        const skip = Math.max(0, query.pageSize * (query.page - 1));
         const filterObject: FilterQuery<IUser> = { isDeleted: false };
 
         if (query.search) {
+            const searchRegex = { $regex: query.search, $options: "i" };
             filterObject.$or = [
-                { name: { $regex: query.search, $options: "i" } },
-                { email: { $regex: query.search, $options: "i" } },
-                { surname: { $regex: query.search, $options: "i" } },
+                { name: searchRegex },
+                { email: searchRegex },
+                { surname: searchRegex },
             ];
         }
+
+        const sortOrder = query.order || "-createdAt";
 
         return await Promise.all([
             User.find(filterObject)
                 .limit(query.pageSize)
                 .skip(skip)
-                .sort(query.order)
+                .sort(sortOrder)
                 .populate("role"),
             User.countDocuments(filterObject),
         ]);
@@ -63,16 +66,16 @@ class UserRepository {
     }
 
     public blockUser(userId: string): Promise<IUser | null> {
-        return User.findByIdAndUpdate(
-            userId,
+        return User.findOneAndUpdate(
+            { _id: userId, isDeleted: false },
             { isActive: false },
             { returnDocument: "after" },
         ).populate("role");
     }
 
     public unBlockUser(userId: string): Promise<IUser | null> {
-        return User.findByIdAndUpdate(
-            userId,
+        return User.findOneAndUpdate(
+            { _id: userId, isDeleted: false },
             { isActive: true },
             { returnDocument: "after" },
         ).populate("role");

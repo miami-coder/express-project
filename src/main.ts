@@ -7,6 +7,7 @@ import { config } from "./configs/config.js";
 import { cronRunner } from "./crons/index.js";
 import { errorHandler } from "./middlewares/error-handler.middleware.js";
 import { apiRouter } from "./routers/api.router.js";
+import { runSeeds } from "./seeds/index.js";
 
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
@@ -18,6 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/", apiRouter);
 
 app.use(errorHandler);
+
+app.use(express.static("public"));
 
 process.on("uncaughtException", (err) => {
     console.log("uncaughtException", err);
@@ -39,7 +42,10 @@ const dbConnection = async () => {
             dbCon = true;
             console.log("Database connected");
         } catch (e) {
-            console.log("Database unavailable, wait 3 seconds", e.message);
+            console.log(
+                "Database unavailable, wait 3 seconds",
+                (e as Error).message,
+            );
             await new Promise((resolve) => setTimeout(resolve, 3000));
         }
     }
@@ -48,6 +54,7 @@ const dbConnection = async () => {
 const start = async () => {
     try {
         await dbConnection();
+        await runSeeds();
         cronRunner();
         app.listen(config.PORT, async () => {
             console.log(`Server listening on http://localhost:${config.PORT}`);

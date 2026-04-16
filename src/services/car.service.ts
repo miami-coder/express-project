@@ -3,20 +3,62 @@ import { FORBIDDEN_WORDS } from "../constants/forbidden-words.constant.js";
 import { EAccountType } from "../enums/account-type.enum.js";
 import { ECarStatus } from "../enums/car-status.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
-import { ICar } from "../interfaces/car.interface.js";
+import { ICar, ICarQuery, ICarResponse } from "../interfaces/car.interface.js";
+import { IUser } from "../interfaces/user.interface.js";
 import { User } from "../models/user.model.js";
 import { brandRepository } from "../repositories/brand.repository.js";
 import { carRepository } from "../repositories/car.repository.js";
 import { emailService } from "./email.service.js";
 import { exchangeService } from "./exchange.service.js";
+import { fileService } from "./file.service.js";
 
 class CarService {
+    public async getAll(query: ICarQuery): Promise<[ICar[], number]> {
+        return await carRepository.getAll(query);
+    }
+
+    public async getById(id: string, user: IUser): Promise<ICarResponse> {
+        const car = await carRepository.getById(id);
+
+        if (!car) {
+            throw new ApiError("Car not found", StatusCodesEnum.NOT_FOUND);
+        }
+
+        const carResponse: ICarResponse = car.toObject() as ICarResponse;
+
+        if (user.accountType === EAccountType.PREMIUM) {
+            const stats = await carRepository.getCarStats(
+                car.brand,
+                car.model,
+                car.region,
+            );
+            carResponse.stats = stats;
+        } else {
+            carResponse.viewCount = null;
+        }
+
+        return carResponse;
+    }
+
+    public async updateStatus(id: string, status: ECarStatus): Promise<ICar> {
+        const updatedCar = await carRepository.updateStatus(id, status);
+
+        if (!updatedCar) {
+            throw new ApiError(
+                "Car not found or status not updated",
+                StatusCodesEnum.NOT_FOUND,
+            );
+        }
+
+        return updatedCar;
+    }
+
     public async create(
         sellerId: string,
         carData: Partial<ICar>,
-        user: any,
+        user: IUser,
+        files?: Express.Multer.File[],
     ): Promise<ICar> {
         if (user.accountType === EAccountType.BASE) {
             const carCount = await carRepository.countByUserId(sellerId);
@@ -28,7 +70,16 @@ class CarService {
             }
         }
 
-        const brandFromDb = await brandRepository.getByName(
+        const images: string[] = [];
+
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const filePath = await fileService.saveFile(file, "cars");
+                images.push(filePath);
+            }
+        }
+
+        const brandFromDb = await brandRepository.getById(
             carData.brand as string,
         );
 
@@ -82,8 +133,8 @@ class CarService {
             viewCount: { total: 0, daily: 0, weekly: 0, monthly: 0 },
         });
 
-        if (user.role === EUserRole.BUYER) {
-            await User.findByIdAndUpdate(sellerId, { role: EUserRole.SELLER });
+        if (user.role.name === "buyer") {
+            await User.findByIdAndUpdate(sellerId, { role: "seller" });
         }
 
         return newCar;
@@ -99,7 +150,7 @@ class CarService {
             throw new ApiError("Car not found", StatusCodesEnum.NOT_FOUND);
         }
 
-        const currentCar = JSON.parse(JSON.stringify(carDocument));
+        const currentCar = carDocument.toObject();
 
         if (updateData.description) {
             const hasBadWords = FORBIDDEN_WORDS.some((word) =>

@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 import { Brand } from "../models/brand.model.js";
 
 const brands = [
@@ -8,19 +6,12 @@ const brands = [
     { name: "TOYOTA", models: ["Camry", "Corolla", "RAV4"] },
 ];
 
-const seedBrands = async () => {
+export const seedBrands = async () => {
     try {
-        await mongoose.connect(
-            "mongodb://admin:admin@localhost:27017/autoria-db?authSource=admin",
-        );
         await Brand.deleteMany({});
         await Brand.insertMany(brands);
         console.log("Brands successfully added!");
-        process.exit();
     } catch (e) {
         console.error(e);
-        process.exit(1);
     }
 };
-
-seedBrands();

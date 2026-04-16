@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
 import { StatusCodesEnum } from "../enums/sc.enum.js";
-import { EUserRole } from "../enums/user-role.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ITokenPayload } from "../interfaces/token.interface.js";
 import { tokenRepository } from "../repositories/token.repository.js";
@@ -24,6 +23,12 @@ class AuthMiddleware {
             }
 
             const payload = tokenService.checkToken(accessToken, "access");
+            const tokenFromDb = await tokenRepository.findOne({ accessToken });
+            if (!tokenFromDb)
+                throw new ApiError(
+                    "Token not found",
+                    StatusCodesEnum.UNAUTHORIZED,
+                );
             const user = await userService.getById(payload.userId);
             if (!user) {
                 throw new ApiError(
@@ -78,11 +83,11 @@ class AuthMiddleware {
         }
     }
 
-    public checkRole(roles: EUserRole[]) {
+    public checkRole(roles: string[]) {
         return (req: Request, res: Response, next: NextFunction) => {
             try {
-                const user = res.locals.user;
-                if (!roles.includes(user.role)) {
+                const { role } = res.locals.tokenPayload as ITokenPayload;
+                if (!roles.includes(role)) {
                     throw new ApiError(
                         "Forbidden: Insufficient permisions",
                         StatusCodesEnum.FORBIDDEN,
@@ -129,7 +134,7 @@ class AuthMiddleware {
             const { userId, role } = res.locals.tokenPayload as ITokenPayload;
             const { id } = req.params;
 
-            if (role === EUserRole.ADMIN || role === EUserRole.MANAGER) {
+            if (role === "admin" || role === "manager") {
                 return next();
             }
 

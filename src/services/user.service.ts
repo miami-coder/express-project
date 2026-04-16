@@ -2,12 +2,16 @@ import { EAccountType } from "../enums/account-type.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { IPaginatedResponse } from "../interfaces/paginated-response.interface.js";
+import { ITokenPayload } from "../interfaces/token.interface.js";
 import {
     IUser,
     IUserCreateDTO,
     IUserQuery,
 } from "../interfaces/user.interface.js";
+import { Role } from "../models/role.model.js";
+import { roleRepository } from "../repositories/role.repository.js";
 import { userRepository } from "../repositories/user.repository.js";
+import { passwordService } from "./password.service.js";
 
 class UserService {
     public async getAll(query: IUserQuery): Promise<IPaginatedResponse<IUser>> {
@@ -23,8 +27,15 @@ class UserService {
         };
     }
 
-    public create(user: IUserCreateDTO): Promise<IUser> {
-        return userRepository.create(user);
+    public async create(user: IUserCreateDTO): Promise<IUser> {
+        if (typeof user.role === "string" && user.role.length < 24) {
+            const roleDoc = await Role.findOne({ name: user.role });
+            if (!roleDoc) {
+                throw new ApiError("Role not found", StatusCodesEnum.NOT_FOUND);
+            }
+            user.role = roleDoc._id;
+        }
+        return await userRepository.create(user);
     }
 
     public async getById(userId: string): Promise<IUser | null> {
@@ -35,11 +46,24 @@ class UserService {
         return user;
     }
     public async updateById(
-        userId: string,
-        user: Partial<IUser>,
+        targetUserId: string,
+        dto: any,
+        currentUser: ITokenPayload,
     ): Promise<IUser | null> {
-        await this.getById(userId);
-        return await userRepository.updateById(userId, user);
+        if (
+            currentUser.role !== "admin" &&
+            targetUserId !== currentUser.userId
+        ) {
+            throw new ApiError("You can only update your own profile", 403);
+        }
+
+        const finalUpdateData = { ...dto };
+
+        if (currentUser.role !== "admin") {
+            delete (finalUpdateData as any).role;
+        }
+
+        return await userRepository.updateById(targetUserId, finalUpdateData);
     }
 
     public async deleteById(userId: string): Promise<void> {
@@ -112,6 +136,22 @@ class UserService {
         }
 
         return updatedUser;
+    }
+
+    public async createManager(dto: IUserCreateDTO): Promise<IUser> {
+        const hashedPassword = await passwordService.hashPassword(dto.password);
+
+        const managerRole = await roleRepository.getByName("manager");
+        if (!managerRole) {
+            throw new ApiError("Role 'manager' not found in DB", 500);
+        }
+
+        return await userRepository.create({
+            ...dto,
+            password: hashedPassword,
+            role: managerRole._id,
+            accountType: EAccountType.PREMIUM,
+        });
     }
 }
 
