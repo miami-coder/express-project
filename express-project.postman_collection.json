@@ -23,7 +23,7 @@
               "urlencoded": [
                 {
                   "key": "email",
-                  "value": "user2@gmail.com",
+                  "value": "admin123@gmail.com",
                   "type": "text",
                   "uuid": "54de4f84-a0e2-4d68-b1f1-b5e8d1406bf2"
                 },
@@ -35,7 +35,7 @@
                 },
                 {
                   "key": "name",
-                  "value": "Indus",
+                  "value": "Bos",
                   "type": "text",
                   "uuid": "8f10fafe-aae1-41cd-8073-253d24cf7843"
                 },
@@ -176,6 +176,70 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "if (response.data && response.data.tokens) {\r",
+                  "    pm.environment.set(\"accessToken\", response.data.tokens.accessToken);\r",
+                  "    pm.environment.set(\"refreshToken\", response.data.tokens.refreshToken);\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "test2222@gmail.com",
+                  "type": "text",
+                  "uuid": "2ec3936e-eb9d-45ec-9281-0b75da37e9bb",
+                  "disabled": true
+                },
+                {
+                  "key": "password",
+                  "value": "P@$$word1",
+                  "type": "text",
+                  "uuid": "156d6a84-8cfa-441d-afe2-8528deec0e43",
+                  "disabled": true
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -198,13 +262,63 @@
             "method": "POST",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"brand\": \"Audi\",\r\n    \"model\": \"A6\",\r\n    \"year\": 2024,\r\n    \"price\": 52000,\r\n    \"currency\": \"USD\",\r\n    \"description\": \"Машина в ідеальному стані, перший власник, не бита.\",\r\n    \"region\": \"Київ\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "uuid": "a7e48fd0-d7e9-4e70-b3c6-58318f9fd982",
+                  "src": "/home/palamar/Desktop/download.jpeg"
+                },
+                {
+                  "key": "brand",
+                  "value": "AUDI",
+                  "type": "text",
+                  "uuid": "e9465133-9cce-4892-bd0a-c981c553c89e"
+                },
+                {
+                  "key": "model",
+                  "value": "A6",
+                  "type": "text",
+                  "uuid": "56fd3762-09e1-418e-b733-d6fb59910082"
+                },
+                {
+                  "key": "year",
+                  "value": "2024",
+                  "type": "text",
+                  "uuid": "e418bdf8-7841-48f5-9cfe-ad5da86c870c"
+                },
+                {
+                  "key": "price",
+                  "value": "52500",
+                  "type": "text",
+                  "uuid": "2630461f-90b9-4cbd-95d7-3c3a9a51f440"
+                },
+                {
+                  "key": "currency",
+                  "value": "USD",
+                  "type": "text",
+                  "uuid": "dc40d05a-0d71-4acc-8c52-ee6c22ceca5a"
+                },
+                {
+                  "key": "description",
+                  "value": "Машина в ідеальному стані, перший власник, не бита.",
+                  "type": "text",
+                  "uuid": "4f262143-d362-407f-b211-3e8f36e10bb0"
+                },
+                {
+                  "key": "region",
+                  "value": "Київ",
+                  "type": "text",
+                  "uuid": "ff978c16-976a-42fa-98b7-87db15c36205"
+                },
+                {
+                  "key": "_sellerId",
+                  "value": "69e09fc764f090171b5aa747",
+                  "type": "text",
+                  "uuid": "4fbc45f2-b044-44f3-962a-d469378e62bf"
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{baseUrl}}/cars",

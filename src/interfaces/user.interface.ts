@@ -10,7 +10,7 @@ interface IUser extends IBase {
     surname: string;
     email: string;
     password: string;
-    role: IRole;
+    role: IRole | Types.ObjectId | string;
     accountType: EAccountType;
     permissions: string[];
     isVerified: boolean;

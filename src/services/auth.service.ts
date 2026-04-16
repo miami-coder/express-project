@@ -64,7 +64,7 @@ class AuthService {
 
         await tokenRepository.deleteByParams({ _userId: user._id });
 
-        const userRole: IRole = user.role;
+        const userRole = user.role as IRole;
         const tokens = tokenService.generateTokens({
             userId: user._id.toString(),
             role: userRole.name,

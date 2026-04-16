@@ -5,10 +5,12 @@ import { ECarStatus } from "../enums/car-status.enum.js";
 import { StatusCodesEnum } from "../enums/sc.enum.js";
 import { ApiError } from "../errors/api.error.js";
 import { ICar, ICarQuery, ICarResponse } from "../interfaces/car.interface.js";
+import { IRole } from "../interfaces/role.interface.js";
 import { IUser } from "../interfaces/user.interface.js";
 import { User } from "../models/user.model.js";
 import { brandRepository } from "../repositories/brand.repository.js";
 import { carRepository } from "../repositories/car.repository.js";
+import { roleRepository } from "../repositories/role.repository.js";
 import { emailService } from "./email.service.js";
 import { exchangeService } from "./exchange.service.js";
 import { fileService } from "./file.service.js";
@@ -79,7 +81,7 @@ class CarService {
             }
         }
 
-        const brandFromDb = await brandRepository.getById(
+        const brandFromDb = await brandRepository.getByName(
             carData.brand as string,
         );
 
@@ -126,15 +128,21 @@ class CarService {
         const newCar = await carRepository.create({
             ...carData,
             _sellerId: sellerId,
-            status,
-            editAttempts,
-            prices,
+            images: images,
+            status: status,
+            editAttempts: editAttempts,
+            prices: prices,
             exchangeRate: rates[userCurrency] || 1,
             viewCount: { total: 0, daily: 0, weekly: 0, monthly: 0 },
-        });
+        } as ICar);
 
-        if (user.role.name === "buyer") {
-            await User.findByIdAndUpdate(sellerId, { role: "seller" });
+        if ((user.role as IRole).name === "buyer") {
+            const sellerRole = await roleRepository.getByName("seller");
+            if (sellerRole) {
+                await User.findByIdAndUpdate(sellerId, {
+                    role: sellerRole._id,
+                });
+            }
         }
 
         return newCar;

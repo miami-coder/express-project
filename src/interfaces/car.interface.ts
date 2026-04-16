@@ -3,14 +3,14 @@ import { ECurrency } from "../enums/currency.enum.js";
 import { IBase } from "./base.interface.js";
 
 interface ICar extends IBase {
-    _id: string;
+    _id?: string;
     brand: string;
     model: string;
     year: number;
     description: string;
     price: number;
     currency: ECurrency;
-
+    images: string[];
     prices: {
         usd: number;
         eur: number;

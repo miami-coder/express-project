@@ -9,8 +9,10 @@ class BrandRepository {
             .lean()) as unknown as IBrand[];
     }
 
-    public async getById(id: string): Promise<IBrand | null> {
-        return (await Brand.findById(id).lean()) as unknown as IBrand | null;
+    public async getByName(name: string): Promise<IBrand | null> {
+        return await Brand.findOne({
+            name: { $regex: new RegExp(`^${name}$`, "i") },
+        });
     }
 }
 

@@ -34,8 +34,12 @@ class UserRepository {
         ]);
     }
 
-    public create(user: IUserCreateDTO): Promise<IUser> {
-        return User.create(user as AnyKeys<IUser>);
+    public async create(dto: IUserCreateDTO): Promise<IUser> {
+        const user = await User.create(dto as AnyKeys<IUser>);
+
+        const populatedUser = await user.populate("role");
+
+        return populatedUser.toObject() as IUser;
     }
 
     public getById(userId: string): Promise<IUser | null> {
